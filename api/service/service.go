@@ -1,30 +1,24 @@
-package routes
+package service
 import (
 	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
-	"strconv"
 	"strings"
+	"github.com/google/uuid"
 )
 
-type Detail struct{
-	Id int `json:"id"`
+type Todo struct{
+	Id uuid.UUID `json:"id"`
 	Title string `json:"title"`
 	Description string `json:"description"`
 }
 
-type DetailPut struct{
-	Title string `json:"title"`
-	Description string `json:"description"`
-}
 
 // The In-Memory Array to store the details
-var list []Detail
+var list []Todo
 
-// This will act as an unique id to differentiate between different todos and we will increment it as we add more todos
-var count = 1
 
 // Get function to find all the todos listed
 func Get(w http.ResponseWriter,r *http.Request){
@@ -43,22 +37,22 @@ func Post(w http.ResponseWriter,r *http.Request){
 		fmt.Println("error")
 		return
 	}
-	detail:= Detail{}
+	detail:= Todo{}
 	err = json.NewDecoder(bytes.NewReader(body)).Decode(&detail)
 	if err!=nil{
 		fmt.Println("error")
 		return
 	}
-	detail.Id = count
+	id := uuid.New()
+	detail.Id = id
 	list = append(list,detail)
-	count++
 	w.Write([]byte("Entry Posted"))
 }
 
 // Put function to edit the todo
 func Put(w http.ResponseWriter,r *http.Request){
 	body,_ := io.ReadAll(r.Body)
-	detail:= DetailPut{}
+	detail:= Todo{}
 	err := json.NewDecoder(bytes.NewReader(body)).Decode(&detail)
 	if err!=nil{
 		fmt.Println("error")
@@ -70,7 +64,11 @@ func Put(w http.ResponseWriter,r *http.Request){
 		fmt.Println("error! id not given")
 		return
 	}
-	id,_:= strconv.Atoi(parts[2])
+	id, err := uuid.Parse(parts[2])
+	if err != nil {
+		fmt.Println("invalid UUID format")
+		return
+	}
 	for ind,val:= range list{
 		if val.Id==id{
 			list[ind].Title = detail.Title
@@ -90,7 +88,11 @@ func Delete(w http.ResponseWriter,r *http.Request){
 		return
 	}
 	var ind = -1
-	id,_:= strconv.Atoi(parts[2])
+	id, err := uuid.Parse(parts[2])
+	if err != nil {
+		fmt.Println("invalid UUID format")
+		return
+	}
 	for i,val:= range list{
 		if val.Id == id{
 			ind = i
