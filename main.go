@@ -3,17 +3,11 @@ package main
 import (
 	"log"
 	"net/http"
-	"main/routes"
+	"main/api"
 )
 
 func main(){
-	http.HandleFunc("/",routes.Get)
-
-	http.HandleFunc("/post",routes.Post)
-
-	http.HandleFunc("/put/",routes.Put)
-
-	http.HandleFunc("/delete/",routes.Delete)
+	api.Routes()
 	
 	log.Fatal(http.ListenAndServe(":8000",nil))
 }
